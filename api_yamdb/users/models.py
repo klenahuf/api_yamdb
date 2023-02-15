@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from users.validators import UnicodeUsernameValidator
+
 
 class User(AbstractUser):
     USER = 'user'
@@ -18,6 +20,11 @@ class User(AbstractUser):
         if self.is_superuser:
             self.role = self.ADMIN
 
+    username = models.CharField(
+        'имя пользователя',
+        max_length=50,
+        validators=UnicodeUsernameValidator
+    )
     role = models.CharField(
         'роль пользователя',
         choices=USER_ROLES,
