@@ -5,12 +5,12 @@ from titles.models import Title
 
 
 from .filters import TitleFilter
-from .permissions import IsAdminModeratorAuthor
+from .permissions import IsModerOrAdminOrOwnerOrReadOnly
 from .serializers import (CommentSerializer, ReviewSerializer)
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAdminModeratorAuthor, ]
+    permission_classes = [IsModerOrAdminOrOwnerOrReadOnly, ]
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -24,7 +24,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAdminModeratorAuthor, ]
+    permission_classes = [IsModerOrAdminOrOwnerOrReadOnly, ]
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
