@@ -19,7 +19,11 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
     path('api/', include('api.urls')),
+=======
+    path('users/', include('users.urls')),
+>>>>>>> develop
     path(
         'redoc/',
         TemplateView.as_view(template_name='redoc.html'),
