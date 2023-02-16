@@ -1,4 +1,4 @@
-from django_filters.rest_framework import CharFilter, FilterSet
+from django_filters.rest_framework import CharFilter, FilterSet, NumberFilter
 from titles.models import Title
 
 
@@ -11,6 +11,7 @@ class TitleFilter(FilterSet):
     genre = CharFilter(
         field_name="genre__slug", lookup_expr='icontains'
     )
+    year = NumberFilter(field_name='year', lookup_expr='exact')
 
     class Meta:
         model = Title
