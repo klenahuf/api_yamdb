@@ -52,7 +52,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [IsAdmin, AllowAny, ]
+    permission_classes = [IsAdmin | AllowAny]
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = TitleFilter
 
@@ -64,7 +64,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(GetListCreateDeleteMixin):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdmin, AllowAny, ]
+    permission_classes = [IsAdmin | AllowAny]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -72,9 +72,9 @@ class CategoryViewSet(GetListCreateDeleteMixin):
 class GenreViewSet(GetListCreateDeleteMixin):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdmin, AllowAny]
+    permission_classes = [IsAdmin | AllowAny]
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('slug',)
+    search_fields = ('name',)
 
 
 @api_view(["POST"])
