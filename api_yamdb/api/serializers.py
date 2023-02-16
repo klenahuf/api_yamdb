@@ -8,6 +8,7 @@ from rest_framework.validators import UniqueValidator
 from reviews.models import Comment, Review
 from titles.models import Category, Genre, Title
 from users.models import User
+from users.validators import UnicodeUsernameValidator
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -100,7 +101,8 @@ class TitleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[
-            UniqueValidator(queryset=User.objects.all())
+            UniqueValidator(queryset=User.objects.all()),
+            UnicodeUsernameValidator
         ],
         required=True,
     )
@@ -118,11 +120,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
+
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
         model = User
         read_only_fields = ('role',)
+        validators = [UnicodeUsernameValidator]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
