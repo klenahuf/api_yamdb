@@ -22,8 +22,8 @@ class User(AbstractUser):
 
     username = models.CharField(
         'имя пользователя',
-        max_length=50,
-        validators=UnicodeUsernameValidator
+        max_length=150,
+        validators=UnicodeUsernameValidator,
     )
     role = models.CharField(
         'роль пользователя',
@@ -34,13 +34,6 @@ class User(AbstractUser):
     bio = models.TextField(
         'Биография',
         blank=True,
-    )
-
-    confirmation_code = models.CharField(
-        'Код авторизации',
-        max_length=150,
-        blank=True,
-        null=True
     )
 
     class Meta:
@@ -64,6 +57,3 @@ class User(AbstractUser):
     @property
     def is_user(self):
         return self.role == self.USER
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
