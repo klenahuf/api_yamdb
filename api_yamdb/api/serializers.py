@@ -1,9 +1,11 @@
+import datetime as dt
+from django.db.models import Avg
 from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from reviews.models import Comment, Review
-from titles.models import Title
+from titles.models import Category, Genre, Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -51,31 +53,43 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Comment
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
-
-
-from titles.models import Category, Genre, Title, GenreTitle
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        fields = '__all__'
-        model = Title
 
 
 class CategorySerializer(serializers.ModelSerializer):
     
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug')
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
     
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug')
         model = Genre
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+    rating = serializers.SerializerMethodField()
+
+    def get_rating(self, obj):
+        reviews = obj.reviews.all()
+        if reviews:
+            rating = reviews.aggregate(Avg('score'))['score__avg']
+        else:
+            rating = None
+        return rating
+    
+   
+    def validate_year(self, year):
+        if year > dt.datetime.now().year:
+            raise serializers.ValidationError(
+                'Год выпуска не может быть больше текущего года')
+        return year
+
+
+    class Meta:
+        fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category')
+        model = Title
