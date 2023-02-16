@@ -3,9 +3,11 @@ from django.db.models import Avg
 from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from reviews.models import Comment, Review
 from titles.models import Category, Genre, Title
+from users.models import User
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -56,14 +58,14 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         fields = ('name', 'slug')
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         fields = ('name', 'slug')
         model = Genre
@@ -81,15 +83,70 @@ class TitleSerializer(serializers.ModelSerializer):
         else:
             rating = None
         return rating
-    
-   
+
     def validate_year(self, year):
         if year > dt.datetime.now().year:
             raise serializers.ValidationError(
                 'Год выпуска не может быть больше текущего года')
         return year
 
+    class Meta:
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
+        model = Title
+
+
+class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ],
+        required=True,
+    )
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
 
     class Meta:
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category')
-        model = Title
+        fields = ("username", "email", "first_name",
+                  "last_name", "bio", "role")
+        model = User
+        lookup_field = 'username'
+
+
+class UserEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ("username", "email", "first_name",
+                  "last_name", "bio", "role")
+        model = User
+        read_only_fields = ('role',)
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+
+    def validate_username(self, value):
+        if value.lower() == "me":
+            raise serializers.ValidationError("Username 'me' is not valid")
+        return value
+
+    class Meta:
+        fields = ("username", "email")
+        model = User
+
+
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
