@@ -23,7 +23,6 @@ class IsAdminOrReadOnly(BasePermission):
                 request.user.is_admin or request.user.is_superuser
             )
         )
-        
 
 
 class IsAdmin(BasePermission):

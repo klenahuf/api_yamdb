@@ -20,6 +20,11 @@ class User(AbstractUser):
         if self.is_superuser:
             self.role = self.ADMIN
 
+    email = models.EmailField(
+        verbose_name='Адрес электронной почты',
+        unique=True,
+    )
+
     username = models.CharField(
         'имя пользователя',
         max_length=150,
@@ -57,3 +62,6 @@ class User(AbstractUser):
     @property
     def is_user(self):
         return self.role == self.USER
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
