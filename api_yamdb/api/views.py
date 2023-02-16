@@ -6,7 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from titles.models import Category, Genre, Title
 from .filters import TitleFilter
-from users.permissions import IsModerOrAdminOrOwnerOrReadOnly, IsAdminOrReadOnly
+from users.permissions import IsModerOrAdminOrOwnerOrReadOnly, IsAdmin
 from .mixins import GetListCreateDeleteMixin
 from .serializers import (CategorySerializer, CommentSerializer, GenreSerializer, ReviewSerializer, TitleSerializer)
 
@@ -41,8 +41,8 @@ class CommentViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [IsAdminOrReadOnly, AllowAny,]
-    filter_backends = (DjangoFilterBackend,)
+    permission_classes = [IsAdmin, AllowAny,]
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = TitleFilter
 
     def perform_create(self, serializer):
@@ -53,7 +53,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(GetListCreateDeleteMixin):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly, AllowAny,] 
+    permission_classes = [IsAdmin, AllowAny,] 
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -61,6 +61,6 @@ class CategoryViewSet(GetListCreateDeleteMixin):
 class GenreViewSet(GetListCreateDeleteMixin):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly, AllowAny]
+    permission_classes = [IsAdmin, AllowAny]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('slug',)

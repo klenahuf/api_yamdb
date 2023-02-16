@@ -2,10 +2,6 @@ from django.db import models
 
 
 class Category(models.Model):
-    """
-    Категории (типы) произведений («Фильмы», «Книги», «Музыка»).
-    Одно произведение может быть привязано только к одной категории.
-    """
     name = models.CharField(max_length=256, verbose_name='Категория')
     slug = models.SlugField(unique=True, max_length=50)
 
@@ -14,10 +10,6 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    """
-    Жанры произведений. Одно произведение может быть
-    привязано к нескольким жанрам.
-    """
     name = models.CharField(max_length=256, verbose_name='Жанр')
     slug = models.SlugField(unique=True, max_length=50)
 
@@ -26,10 +18,6 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    """
-    Произведения, к которым пишут отзывы: определённый фильм,
-    книга или песенка.
-    """
     name = models.CharField(
         max_length=256, verbose_name='Произведение'
     )
@@ -68,5 +56,6 @@ class GenreTitle(models.Model):
                 name='unique_title_genre'
             )
         ]
+    
     def __str__(self):
         return f'{self.title} {self.genre}'
