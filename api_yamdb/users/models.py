@@ -23,7 +23,7 @@ class User(AbstractUser):
     username = models.CharField(
         'имя пользователя',
         max_length=150,
-        validators=UnicodeUsernameValidator,
+        validators=[UnicodeUsernameValidator],
     )
     role = models.CharField(
         'роль пользователя',
