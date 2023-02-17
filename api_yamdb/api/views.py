@@ -18,7 +18,7 @@ from .mixins import GetListCreateDeleteMixin
 from .serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
     ReviewSerializer, TitleSerializer, TokenSerializer,
-    RegisterSerializer, TokenSerializer, UserEditSerializer, UserSerializer
+    TokenSerializer, UserEditSerializer, UserSerializer, SignUpSerializer
 )
 
 
@@ -96,24 +96,50 @@ def get_jwt_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# def register(request):
+#     serializer = RegisterSerializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+#     user = get_object_or_404(
+#         User,
+#         username=serializer.validated_data["username"]
+#     )
+#     confirmation_code = default_token_generator.make_token(user)
+#     send_mail(
+#         subject="YaMDb registration",
+#         message=f"Your confirmation code: {confirmation_code}",
+#         from_email=None,
+#         recipient_list=[user.email],
+#     )
+
+#     return Response(serializer.data, status=status.HTTP_200_OK)
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
-    serializer = RegisterSerializer(data=request.data)
+    serializer = SignUpSerializer(data=request.data)
+    if User.objects.filter(username=request.data.get('username'), email=request.data.get('email')).exists():
+        user, created = User.objects.get_or_create(
+            username=request.data.get('username')
+        )
+        if created is False:
+            confirmation_code = default_token_generator.make_token(user)
+            user.confirmation_code = confirmation_code
+            user.save()
+            return Response('Token updated', status=status.HTTP_200_OK)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    user = get_object_or_404(
-        User,
-        username=serializer.validated_data["username"]
+    user = User.objects.get(
+        username=request.data['username'],
+        email=request.data['email']
     )
     confirmation_code = default_token_generator.make_token(user)
+    user.confirmation_code = confirmation_code
     send_mail(
-        subject="YaMDb registration",
-        message=f"Your confirmation code: {confirmation_code}",
-        from_email=None,
-        recipient=user.email,
+        'Confirmation code',
+        message=f"Confirmation code, {confirmation_code}",
+        from_email='yamdb@gmail.com',
+        recipient_list=[request.data['email']],
     )
-
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -125,6 +151,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
     @action(
         methods=[
