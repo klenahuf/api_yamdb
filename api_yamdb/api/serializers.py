@@ -3,12 +3,12 @@ from django.db.models import Avg
 from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 
 from reviews.models import Comment, Review
 from titles.models import Category, Genre, Title
 from users.models import User
-from users.validators import UnicodeUsernameValidator
+from .validators import validate_email, validate_username
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -101,15 +101,16 @@ class TitleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[
-            UniqueValidator(queryset=User.objects.all()),
-            UnicodeUsernameValidator
+            UniqueValidator(queryset=User.objects.all())
         ],
         required=True,
+        max_length=150,
     )
     email = serializers.EmailField(
         validators=[
             UniqueValidator(queryset=User.objects.all())
-        ]
+        ],
+        max_length=254,
     )
 
     class Meta:
@@ -120,35 +121,65 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
+    username = serializers.RegexField(regex=r'^[\w.@+-]+$', required=True)
 
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
         model = User
         read_only_fields = ('role',)
-        validators = [UnicodeUsernameValidator]
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
+# class RegisterSerializer(serializers.ModelSerializer):
+#     username = serializers.CharField(
+#         validators=[
+#             UniqueValidator(queryset=User.objects.all()),
+#         ],
+#         max_length=150,
+#     )
+#     email = serializers.EmailField(
+#         validators=[
+#             UniqueValidator(queryset=User.objects.all())
+#         ],
+#         max_length=254,
+#     )
+
+#     def validate_username(self, value):
+#         if value.lower() == "me":
+#             raise serializers.ValidationError("Username 'me' is not valid")
+#         return value
+
+#     class Meta:
+#         fields = ("username", "email")
+#         model = User
+
+
+class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
+        max_length=254, allow_blank=False, validators=[validate_email]
     )
-
-    def validate_username(self, value):
-        if value.lower() == "me":
-            raise serializers.ValidationError("Username 'me' is not valid")
-        return value
+    username = serializers.CharField(
+        max_length=150, allow_blank=False, validators=[validate_username]
+    )
 
     class Meta:
-        fields = ("username", "email")
         model = User
+        fields = ('email', 'username')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=['email', 'username']
+            )
+        ]
+
+    def create(self, validated_data):
+        return User.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.username = validated_data.get('username', instance.username)
+        instance.save()
+        return instance
 
 
 class TokenSerializer(serializers.Serializer):

@@ -1,8 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from users.validators import UnicodeUsernameValidator
-
 
 class User(AbstractUser):
     USER = 'user'
@@ -28,7 +26,6 @@ class User(AbstractUser):
     username = models.CharField(
         'имя пользователя',
         max_length=150,
-        validators=[UnicodeUsernameValidator],
     )
 
     role = models.CharField(
