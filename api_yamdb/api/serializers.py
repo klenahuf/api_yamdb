@@ -81,6 +81,7 @@ class TitleSerializer(serializers.ModelSerializer):
         reviews = obj.reviews.all()
         if reviews:
             rating = reviews.aggregate(Avg('score'))['score__avg']
+            rating = round(rating, 2)
         else:
             rating = None
         return rating
