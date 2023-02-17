@@ -70,12 +70,23 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'slug')
         model = Genre
-
+    
 
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
     rating = serializers.SerializerMethodField()
+    
+    # def create(self, validated_data):
+    #     if 'genre' in validated_data:
+    #         genre_data = validated_data.pop('genre')
+    #         lst = []
+    #         for genre in genre_data:
+    #             current_genre, status = Genre.objects.get(
+    #                 **genre
+    #             )
+    #             lst.append(current_genre)
+    #         instance.genre.set(lst)
 
     def get_rating(self, obj):
         reviews = obj.reviews.all()
