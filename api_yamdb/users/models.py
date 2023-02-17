@@ -30,6 +30,7 @@ class User(AbstractUser):
         max_length=150,
         validators=[UnicodeUsernameValidator],
     )
+
     role = models.CharField(
         'роль пользователя',
         choices=USER_ROLES,

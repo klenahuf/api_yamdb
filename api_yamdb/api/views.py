@@ -118,11 +118,13 @@ def register(request):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    lookup_field = "username"
     queryset = User.objects.all()
+    lookup_field = "username"
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
     @action(
         methods=[
@@ -131,7 +133,7 @@ class UserViewSet(viewsets.ModelViewSet):
         ],
         detail=False,
         url_path="me",
-        permission_classes=permissions.IsAuthenticated,
+        permission_classes=(permissions.IsAuthenticated,),
         serializer_class=UserEditSerializer,
     )
     def users_own_profile(self, request):
