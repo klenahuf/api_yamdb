@@ -11,6 +11,8 @@ def validate_username(value):
         raise ValidationError('Такое имя уже есть в базе')
     elif not regex.match(value):
         raise ValidationError('Имя содержит недопустимые символы')
+    elif len(value) > 150:
+        raise ValidationError('Имя содержит недопустимые символы')
 
 
 def validate_email(value):

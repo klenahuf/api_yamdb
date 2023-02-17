@@ -101,14 +101,16 @@ class TitleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[
-            UniqueValidator(queryset=User.objects.all())
+            UniqueValidator(queryset=User.objects.all()),
+            validate_username
         ],
         required=True,
         max_length=150,
     )
     email = serializers.EmailField(
         validators=[
-            UniqueValidator(queryset=User.objects.all())
+            UniqueValidator(queryset=User.objects.all()),
+            validate_email
         ],
         max_length=254,
     )
@@ -121,7 +123,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
-    username = serializers.RegexField(regex=r'^[\w.@+-]+$', required=True)
+    username = serializers.RegexField(regex=r'^[\w.@+-]+$', required=True, max_length=150)
 
     class Meta:
         fields = ("username", "email", "first_name",
