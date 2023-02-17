@@ -1,8 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from users.validators import UnicodeUsernameValidator
-
 
 class User(AbstractUser):
     USER = 'user'
@@ -20,11 +18,16 @@ class User(AbstractUser):
         if self.is_superuser:
             self.role = self.ADMIN
 
+    email = models.EmailField(
+        verbose_name='Адрес электронной почты',
+        unique=True,
+    )
+
     username = models.CharField(
         'имя пользователя',
         max_length=150,
-        validators=[UnicodeUsernameValidator],
     )
+
     role = models.CharField(
         'роль пользователя',
         choices=USER_ROLES,
@@ -39,6 +42,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ['id']
         constraints = [
             models.UniqueConstraint(
                 fields=('username', 'email'),
@@ -57,3 +61,6 @@ class User(AbstractUser):
     @property
     def is_user(self):
         return self.role == self.USER
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
