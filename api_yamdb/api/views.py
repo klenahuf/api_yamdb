@@ -114,7 +114,10 @@ def register(request):
             confirmation_code = default_token_generator.make_token(user)
             user.confirmation_code = confirmation_code
             user.save()
-            return Response(f'Token updated: {confirmation_code}', status=status.HTTP_200_OK)
+            return Response(
+                f'Token updated: {confirmation_code}',
+                status=status.HTTP_200_OK
+            )
     serializer.is_valid(raise_exception=True)
     serializer.save()
     user = User.objects.get(
