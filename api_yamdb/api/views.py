@@ -100,28 +100,13 @@ def get_jwt_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# def register(request):
-#     serializer = RegisterSerializer(data=request.data)
-#     serializer.is_valid(raise_exception=True)
-#     serializer.save()
-#     user = get_object_or_404(
-#         User,
-#         username=serializer.validated_data["username"]
-#     )
-#     confirmation_code = default_token_generator.make_token(user)
-#     send_mail(
-#         subject="YaMDb registration",
-#         message=f"Your confirmation code: {confirmation_code}",
-#         from_email=None,
-#         recipient_list=[user.email],
-#     )
-
-#     return Response(serializer.data, status=status.HTTP_200_OK)
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
     serializer = SignUpSerializer(data=request.data)
-    if User.objects.filter(username=request.data.get('username'), email=request.data.get('email')).exists():
+    if User.objects.filter(
+        username=request.data.get('username'), email=request.data.get('email')
+    ).exists():
         user, created = User.objects.get_or_create(
             username=request.data.get('username')
         )
@@ -129,7 +114,7 @@ def register(request):
             confirmation_code = default_token_generator.make_token(user)
             user.confirmation_code = confirmation_code
             user.save()
-            return Response('Token updated', status=status.HTTP_200_OK)
+            return Response(f'Token updated: {confirmation_code}', status=status.HTTP_200_OK)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     user = User.objects.get(

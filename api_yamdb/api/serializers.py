@@ -70,23 +70,12 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'slug')
         model = Genre
-    
+
 
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
     rating = serializers.SerializerMethodField()
-    
-    # def create(self, validated_data):
-    #     if 'genre' in validated_data:
-    #         genre_data = validated_data.pop('genre')
-    #         lst = []
-    #         for genre in genre_data:
-    #             current_genre, status = Genre.objects.get(
-    #                 **genre
-    #             )
-    #             lst.append(current_genre)
-    #         instance.genre.set(lst)
 
     def get_rating(self, obj):
         reviews = obj.reviews.all()
@@ -135,37 +124,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
-    username = serializers.RegexField(regex=r'^[\w.@+-]+$', required=True, max_length=150)
+    username = serializers.RegexField(
+        regex=r'^[\w.@+-]+$', required=True, max_length=150
+    )
 
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
         model = User
         read_only_fields = ('role',)
-
-
-# class RegisterSerializer(serializers.ModelSerializer):
-#     username = serializers.CharField(
-#         validators=[
-#             UniqueValidator(queryset=User.objects.all()),
-#         ],
-#         max_length=150,
-#     )
-#     email = serializers.EmailField(
-#         validators=[
-#             UniqueValidator(queryset=User.objects.all())
-#         ],
-#         max_length=254,
-#     )
-
-#     def validate_username(self, value):
-#         if value.lower() == "me":
-#             raise serializers.ValidationError("Username 'me' is not valid")
-#         return value
-
-#     class Meta:
-#         fields = ("username", "email")
-#         model = User
 
 
 class SignUpSerializer(serializers.Serializer):
