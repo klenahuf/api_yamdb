@@ -70,12 +70,47 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'slug')
         model = Genre
-    
+
 
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
     rating = serializers.SerializerMethodField()
+
+    def get_rating(self, obj):
+        reviews = obj.reviews.all()
+        if reviews:
+            rating = reviews.aggregate(Avg('score'))['score__avg']
+            rating = round(rating, 2)
+        else:
+            rating = None
+        return rating
+
+    class Meta:
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
+        model = Title
+
+
+class TitlePostSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug'
+    )
+    
+    # def validate_category(self, category):
+    #     try:
+    #         category_obj = Category.objects.get(slug=category)
+    #     except Category.DoesNotExist:
+    #         raise serializers.ValidationError(f"Категория '{category}' не существует")
+    #     return category_obj
+    # rating = serializers.SerializerMethodField()
     
     # def create(self, validated_data):
     #     if 'genre' in validated_data:
@@ -88,15 +123,6 @@ class TitleSerializer(serializers.ModelSerializer):
     #             lst.append(current_genre)
     #         instance.genre.set(lst)
 
-    def get_rating(self, obj):
-        reviews = obj.reviews.all()
-        if reviews:
-            rating = reviews.aggregate(Avg('score'))['score__avg']
-            rating = round(rating, 2)
-        else:
-            rating = None
-        return rating
-
     def validate_year(self, year):
         if year > dt.datetime.now().year:
             raise serializers.ValidationError(
@@ -105,9 +131,10 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+            'id', 'name', 'year', 'description', 'genre', 'category'
         )
         model = Title
+
 
 
 class UserSerializer(serializers.ModelSerializer):

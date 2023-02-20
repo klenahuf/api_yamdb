@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import filters, viewsets, permissions, status
 from django.shortcuts import get_object_or_404
 from reviews.models import Review
@@ -17,8 +18,9 @@ from users.permissions import IsModerOrAdminOrOwnerOrReadOnly, IsAdmin
 from .mixins import GetListCreateDeleteMixin
 from .serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer, TokenSerializer,
-    TokenSerializer, UserEditSerializer, UserSerializer, SignUpSerializer
+    ReviewSerializer, TitleSerializer, TitlePostSerializer,
+    TokenSerializer,     TokenSerializer, UserEditSerializer, 
+    UserSerializer, SignUpSerializer
 )
 from .permissions import ReadOnly
 from rest_framework import status
@@ -54,13 +56,49 @@ class CommentViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [IsAdmin | AllowAny]
+    permission_classes = [IsAdmin | ReadOnly]
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = TitleFilter
 
-    def perform_create(self, serializer):
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+    # def perform_create(self, serializer):
+    #     serializer = TitlePostSerializer()
+    #     # serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    
+    # def perform_create(self, serializer):
+    #     serializer = TitlePostSerializer
+    #     serializer.save()
+    # def perform_create(self, serializer):
+    #     genre_slugs = self.request.data.get('genre')
+    #     category_slug = self.request.data.get('category')
+    #     genre_objs = []
+    #     for genre_slug in genre_slugs:
+    #         try:
+    #             genre = Genre.objects.get(slug=genre_slug)
+    #             genre_objs.append(genre)
+    #         except Genre.DoesNotExist:
+    #             raise ValidationError(f'Жанр "{genre_slug}" не найден')
+
+    #     try:
+    #         category = Category.objects.get(slug=category_slug)
+    #     except Category.DoesNotExist:
+    #         raise ValidationError(f'Категория "{category_slug}" не найдена')
+
+    #     serializer.save(
+    #         category=category,
+    #         genre=genre_objs,
+    #     )
+
+    def get_serializer_class(self):      
+        # if self.action in ['post', 'patch']:
+        if self.action in ['create', 'partial_update']:
+            return TitlePostSerializer
+        return TitleSerializer
+    
+    # def create(self, request):
+
+    #     serializer = TitlePostSerializer()
+    #     return Response(serializer.data)
 
 
 class CategoryViewSet(GetListCreateDeleteMixin):
