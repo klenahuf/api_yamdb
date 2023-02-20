@@ -1,66 +1,65 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from users.validators import UsernameValidator
+
+
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
 
 
 class User(AbstractUser):
-    USER = 'user'
-    MODER = 'moderator'
-    ADMIN = 'admin'
 
-    USER_ROLES = (
-        (MODER, 'Модератор'),
-        (ADMIN, 'Администратор'),
-        (USER, 'Пользователь'),
+    roles = (
+        (USER, USER),
+        (MODERATOR, MODERATOR),
+        (ADMIN, ADMIN),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.is_superuser:
-            self.role = self.ADMIN
-
-    email = models.EmailField(
-        verbose_name='Адрес электронной почты',
-        unique=True,
-    )
-
+    username_validator = UsernameValidator()
     username = models.CharField(
-        'имя пользователя',
+        verbose_name='Имя пользователя',
         max_length=150,
+        unique=True,
+        validators=[username_validator],
     )
-
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(verbose_name='Email', max_length=254,
+                              unique=True, blank=False, null=False)
     role = models.CharField(
-        'роль пользователя',
-        choices=USER_ROLES,
-        default=USER,
-        max_length=50,
+        verbose_name='Роль пользователя',
+        choices=roles,
+        max_length=max(len(role[1]) for role in roles), default=USER
     )
-    bio = models.TextField(
-        'Биография',
-        blank=True,
+    bio = models.TextField(verbose_name='Биография', blank=True)
+    confirmation_code = models.CharField(
+        verbose_name='Код подтверждения',
+        max_length=100,
+        null=True
     )
-
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-        ordering = ['id']
-        constraints = [
-            models.UniqueConstraint(
-                fields=('username', 'email'),
-                name='unique_user'
-            )
-        ]
-
-    @property
-    def is_moderator(self):
-        return self.role == self.MODER
-
-    @property
-    def is_admin(self):
-        return self.role == self.ADMIN or self.is_superuser
-
-    @property
-    def is_user(self):
-        return self.role == self.USER
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
+
+    def __str__(self):
+        return str(self.username)
+
+    @property
+    def is_admin(self):
+        """Проверка пользователя на наличие прав администратора."""
+        return self.role == "admin" or self.is_superuser
+
+    @property
+    def is_moderator(self):
+        """Проверка пользователя на наличие прав модератора."""
+        return self.role == "moderator"
+
+    @property
+    def is_user(self):
+        """Проверка пользователя на наличие стандартных прав."""
+        return self.role == "user"
+
+    class Meta:
+        unique_together = ('email',)
+        ordering = ('username',)
