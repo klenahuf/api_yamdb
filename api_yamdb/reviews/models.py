@@ -1,9 +1,10 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from titles.models import Title
 from users.models import User
 
-from django.conf import settings
+from api_yamdb.settings import NUMBER_OF_SIMBOLS
 
 
 class Review(models.Model):
@@ -54,4 +55,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:settings.NUMBER_OF_SIMBOLS]
+        return self.text[:NUMBER_OF_SIMBOLS]
