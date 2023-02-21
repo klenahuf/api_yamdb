@@ -16,13 +16,13 @@ class User(AbstractUser):
         (ADMIN, ADMIN),
     )
 
-    username_validator = UsernameValidator()
     username = models.CharField(
         verbose_name='Имя пользователя',
         max_length=150,
         unique=True,
-        validators=[username_validator],
+        validators=[UsernameValidator()],
     )
+
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     email = models.EmailField(verbose_name='Email', max_length=254,

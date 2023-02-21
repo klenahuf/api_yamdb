@@ -8,11 +8,16 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from reviews.models import Review
+
 from titles.models import Category, Genre, Title
+
 from users.models import User
 from users.permissions import IsAdminUser
 
@@ -61,7 +66,7 @@ class GenreViewSet(GetListCreateDeleteMixin):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAdminModeratorAuthor, ]
+    permission_classes = [IsAdminModeratorAuthor, IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -75,7 +80,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAdminModeratorAuthor, ]
+    permission_classes = [IsAdminModeratorAuthor, IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
@@ -123,7 +128,7 @@ def create_user(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data.get('username')
     email = serializer.validated_data.get('email')
-    user, created = User.objects.get_or_create(username=username, email=email)
+    user, _ = User.objects.get_or_create(username=username, email=email)
     token = default_token_generator.make_token(user)
 
     try:
