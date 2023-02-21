@@ -3,6 +3,8 @@ from django.db import models
 from titles.models import Title
 from users.models import User
 
+from django.conf import settings
+
 
 class Review(models.Model):
     text = models.TextField()
@@ -52,4 +54,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.NUMBER_OF_SIMBOLS]
