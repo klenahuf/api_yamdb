@@ -9,6 +9,7 @@ from titles.models import Category, Genre, Title
 from users.models import User
 from users.validators import meUsername
 
+
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для жанра."""
 
@@ -121,14 +122,13 @@ class CreateUserSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=254, required=True,)
 
     username = serializers.CharField(
-        max_length=150, required=True,
+        max_length=150, required=True, 
         validators=[UnicodeUsernameValidator(), meUsername,]
     )
 
     class Meta:
         model = User
         fields = ('email', 'username')
-
 
     def validate(self, data):
         username = data.get('username')
