@@ -1,7 +1,7 @@
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-from users.validators import UsernameValidator
+from users.validators import meUsername
 
 
 USER = 'user'
@@ -21,7 +21,7 @@ class User(AbstractUser):
         verbose_name='Имя пользователя',
         max_length=150,
         unique=True,
-        validators=[UsernameValidator()],
+        validators=[UnicodeUsernameValidator(), meUsername],
     )
 
     first_name = models.CharField(max_length=150, blank=True)
@@ -37,7 +37,8 @@ class User(AbstractUser):
     confirmation_code = models.CharField(
         verbose_name='Код подтверждения',
         max_length=100,
-        null=True
+        null=True,
+        blank=True
     )
 
     USERNAME_FIELD = 'email'

@@ -6,13 +6,15 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, status, viewsets, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.permissions import AllowAny
 
 from reviews.models import Review
 from titles.models import Category, Genre, Title
@@ -21,7 +23,9 @@ from users.permissions import IsAdminUser
 
 from .filters import TitleFilter
 from .mixins import GetListCreateDeleteMixin
-from .permissions import IsAdminModeratorAuthor, IsAdminOrReadOnly
+from .permissions import (
+    IsModeratorOrReadOnly, IsAuthorOrReadOnly, IsAdminUserOrReadOnly
+)
 from .serializers import (CategorySerializer, CommentSerializer,
                           CreateTokenSerializer, CreateUserSerializer,
                           GenreSerializer, ReviewSerializer,
@@ -34,7 +38,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
-    permission_classes = [IsAdminOrReadOnly, ]
+    permission_classes = [IsAdminUserOrReadOnly, ]
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH',):
@@ -46,7 +50,7 @@ class CategoryViewSet(GetListCreateDeleteMixin):
     """Вьюсет для категории."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly, ]
+    permission_classes = [IsAdminUserOrReadOnly, ]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name', 'slug',)
     lookup_field = 'slug'
@@ -56,7 +60,7 @@ class GenreViewSet(GetListCreateDeleteMixin):
     """Вьюсет для жанра."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly, ]
+    permission_classes = [IsAdminUserOrReadOnly, ]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
@@ -64,7 +68,10 @@ class GenreViewSet(GetListCreateDeleteMixin):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAdminModeratorAuthor, IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly | IsModeratorOrReadOnly | IsAdminUserOrReadOnly
+    ]
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -78,7 +85,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAdminModeratorAuthor, IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly | IsModeratorOrReadOnly | IsAdminUserOrReadOnly
+    ]
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
@@ -146,25 +156,19 @@ def create_user(request):
         )
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def create_token(request):
-    """Создание JWT-токена для пользователей."""
     serializer = CreateTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
         User,
-        username=serializer.validated_data.get('username')
+        username=serializer.validated_data["username"]
     )
-    confirmation_code = serializer.validated_data.get('confirmation_code')
-    token = default_token_generator.check_token(user, confirmation_code)
+    if default_token_generator.check_token(
+        user, serializer.validated_data["confirmation_code"]
+    ):
+        token = AccessToken.for_user(user)
+        return Response({"token": str(token)}, status=status.HTTP_200_OK)
 
-    if token == serializer.validated_data.get('confirmation_code'):
-        jwt_token = RefreshToken.for_user(user)
-        return Response(
-            {'token': f'{jwt_token}'}, status=status.HTTP_200_OK
-        )
-    return Response(
-        {'message': 'Отказано в доступе'},
-        status=status.HTTP_400_BAD_REQUEST
-    )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
