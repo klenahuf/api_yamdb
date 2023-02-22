@@ -6,13 +6,15 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, status, viewsets, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.permissions import AllowAny
 
 from reviews.models import Review
 from titles.models import Category, Genre, Title
@@ -154,25 +156,19 @@ def create_user(request):
         )
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def create_token(request):
-    """Создание JWT-токена для пользователей."""
     serializer = CreateTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
         User,
-        username=serializer.validated_data.get('username')
+        username=serializer.validated_data["username"]
     )
-    confirmation_code = serializer.validated_data.get('confirmation_code')
-    token = default_token_generator.check_token(user, confirmation_code)
+    if default_token_generator.check_token(
+        user, serializer.validated_data["confirmation_code"]
+    ):
+        token = AccessToken.for_user(user)
+        return Response({"token": str(token)}, status=status.HTTP_200_OK)
 
-    if token == serializer.validated_data.get('confirmation_code'):
-        jwt_token = RefreshToken.for_user(user)
-        return Response(
-            {'token': f'{jwt_token}'}, status=status.HTTP_200_OK
-        )
-    return Response(
-        {'message': 'Отказано в доступе'},
-        status=status.HTTP_400_BAD_REQUEST
-    )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
