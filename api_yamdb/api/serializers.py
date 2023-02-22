@@ -7,7 +7,6 @@ from rest_framework import serializers
 from reviews.models import Comment, Review
 from titles.models import Category, Genre, Title
 from users.models import User
-from users.validators import UsernameValidator
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -123,7 +122,7 @@ class CreateUserSerializer(serializers.Serializer):
 
     username = serializers.CharField(
         max_length=150, required=True,
-        validators=[UnicodeUsernameValidator(), UsernameValidator()]
+        validators=[UnicodeUsernameValidator(), ]
     )
 
     class Meta:
